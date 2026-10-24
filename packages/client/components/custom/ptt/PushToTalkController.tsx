@@ -5,20 +5,9 @@ import { useState } from "@revolt/state";
 
 import { setPushToTalkOpen } from "../gate/GateNode";
 
-import { matchesKeyboard, matchesMouse } from "./bindings";
+import { listenBrowserBinding } from "./browserKeys";
 import { getNativePtt } from "./native";
 import { PttCore } from "./pttCore";
-
-/**
- * Whether an element is a text input where the push-to-talk key must not trigger
- */
-function isTextInput(target: EventTarget | null): boolean {
-  return (
-    target instanceof HTMLElement &&
-    (target.isContentEditable ||
-      ["INPUT", "TEXTAREA", "SELECT"].includes(target.tagName))
-  );
-}
 
 /**
  * Drives push-to-talk while connected to a voice channel.
@@ -74,43 +63,13 @@ export function PushToTalkController() {
     const binding = state.customVoice.pttBinding;
     if (!binding) return;
 
-    const keydown = (event: KeyboardEvent) => {
-      if (!matchesKeyboard(binding, event) || isTextInput(event.target)) return;
-      event.preventDefault();
-      core.press();
-    };
-    const keyup = (event: KeyboardEvent) => {
-      if (matchesKeyboard(binding, event)) core.release();
-    };
-    const mousedown = (event: MouseEvent) => {
-      if (!matchesMouse(binding, event)) return;
-      event.preventDefault();
-      core.press();
-    };
-    const mouseup = (event: MouseEvent) => {
-      if (!matchesMouse(binding, event)) return;
-      // side buttons would otherwise navigate back/forward
-      event.preventDefault();
-      core.release();
-    };
-    const reset = () => core.reset();
-    const visibility = () => {
-      if (document.visibilityState === "hidden") core.reset();
-    };
-
-    window.addEventListener("keydown", keydown, true);
-    window.addEventListener("keyup", keyup, true);
-    window.addEventListener("mousedown", mousedown, true);
-    window.addEventListener("mouseup", mouseup, true);
-    window.addEventListener("blur", reset);
-    document.addEventListener("visibilitychange", visibility);
+    const stop = listenBrowserBinding(binding, {
+      press: () => core.press(),
+      release: () => core.release(),
+      reset: () => core.reset(),
+    });
     onCleanup(() => {
-      window.removeEventListener("keydown", keydown, true);
-      window.removeEventListener("keyup", keyup, true);
-      window.removeEventListener("mousedown", mousedown, true);
-      window.removeEventListener("mouseup", mouseup, true);
-      window.removeEventListener("blur", reset);
-      document.removeEventListener("visibilitychange", visibility);
+      stop();
       core.reset();
     });
   });

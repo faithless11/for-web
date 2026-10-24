@@ -45,6 +45,14 @@ const STRINGS = {
     de: "Diese Taste geht nicht",
   },
   pttClear: { en: "Remove", de: "Entfernen" },
+  pttPressed: {
+    en: "Key pressed – microphone open",
+    de: "Taste gedrückt – Mikro offen",
+  },
+  pttReleased: {
+    en: "Key released – microphone closed (try it: press the key)",
+    de: "Taste nicht gedrückt – Mikro zu (zum Testen Taste drücken)",
+  },
   pttReleaseDelay: { en: "Release delay", de: "Loslass-Verzögerung" },
   pttSound: {
     en: "Sound on press and release",

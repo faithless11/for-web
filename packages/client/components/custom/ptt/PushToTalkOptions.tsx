@@ -1,4 +1,13 @@
-import { Match, Show, Switch, createSignal, onCleanup } from "solid-js";
+import {
+  Match,
+  Show,
+  Switch,
+  createEffect,
+  createSignal,
+  onCleanup,
+} from "solid-js";
+
+import { styled } from "styled-system/jsx";
 
 import { useState } from "@revolt/state";
 import {
@@ -15,6 +24,7 @@ import { currentLanguage, t } from "../i18n";
 import { PTT_RELEASE_DELAY_MAX } from "../voice/settings";
 
 import { bindingFromKeyboard, bindingFromMouse } from "./bindings";
+import { listenBrowserBinding } from "./browserKeys";
 import { getNativePtt } from "./native";
 
 /**
@@ -48,6 +58,29 @@ export function PushToTalkOptions() {
     useNative()
       ? state.customVoice.pttNativeBinding?.label
       : state.customVoice.pttBinding?.label;
+
+  // live key state so the binding can be tried out here
+  const [pressed, setPressed] = createSignal(false);
+  createEffect(() => {
+    setPressed(false);
+    if (state.customVoice.inputMode !== "ptt" || capture() !== "idle") return;
+    if (useNative()) {
+      const binding = state.customVoice.pttNativeBinding;
+      if (!binding) return;
+      native!.listen(binding);
+      const unsubscribe = native!.onState(setPressed);
+      onCleanup(unsubscribe);
+      return;
+    }
+    const binding = state.customVoice.pttBinding;
+    if (!binding) return;
+    const stop = listenBrowserBinding(binding, {
+      press: () => setPressed(true),
+      release: () => setPressed(false),
+      reset: () => setPressed(false),
+    });
+    onCleanup(stop);
+  });
 
   let stopBrowserCapture: (() => void) | undefined;
   onCleanup(() => stopBrowserCapture?.());
@@ -161,6 +194,11 @@ export function PushToTalkOptions() {
             </Match>
           </Switch>
         </Row>
+        <Show when={bindingLabel() && capture() === "idle"}>
+          <KeyState data-pressed={pressed() ? "" : undefined}>
+            {pressed() ? t("pttPressed") : t("pttReleased")}
+          </KeyState>
+        </Show>
         <Text class="label">
           {!native
             ? t("pttBrowserHint")
@@ -194,3 +232,29 @@ export function PushToTalkOptions() {
     </Column>
   );
 }
+
+/**
+ * Live state of the push-to-talk key
+ */
+const KeyState = styled("span", {
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "var(--gap-sm)",
+    fontWeight: 600,
+    color: "var(--md-sys-color-on-surface-variant)",
+    "&::before": {
+      content: "''",
+      width: "10px",
+      height: "10px",
+      borderRadius: "var(--borderRadius-full)",
+      background: "var(--md-sys-color-outline)",
+    },
+    "&[data-pressed]": {
+      color: "var(--brand-presence-online)",
+    },
+    "&[data-pressed]::before": {
+      background: "var(--brand-presence-online)",
+    },
+  },
+});
