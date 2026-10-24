@@ -17,6 +17,8 @@ import { TypeSounds } from "./Sounds";
 import { TypeSynchronisation } from "./Sync";
 import { TypeTheme } from "./Theme";
 import { TypeVoice } from "./Voice";
+// stoat-custom: settings of the custom voice features
+import type { TypeCustomVoice } from "../../custom/voice/settings";
 
 export type Store = {
   auth: TypeAuth;
@@ -34,6 +36,8 @@ export type Store = {
   sync: TypeSynchronisation;
   theme: TypeTheme;
   voice: TypeVoice;
+  // stoat-custom: settings of the custom voice features
+  customVoice: TypeCustomVoice;
 };
 
 /**
