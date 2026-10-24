@@ -135,7 +135,7 @@ export function PushToTalkOptions() {
     setCapture("recording");
     if (useNative()) {
       native!
-        .record()
+        .record(currentLanguage())
         .then((binding) => {
           if (binding) state.customVoice.pttNativeBinding = binding;
           setCapture("idle");

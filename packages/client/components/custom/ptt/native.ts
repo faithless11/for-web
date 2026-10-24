@@ -14,8 +14,9 @@ export interface NativePtt {
 
   /**
    * Capture the next key or mouse button press (Escape or 10 s timeout → null)
+   * @param lang Language of the label
    */
-  record(): Promise<NativePttBinding | null>;
+  record(lang?: "en" | "de"): Promise<NativePttBinding | null>;
 
   /**
    * Start listening for the binding, or stop the hook with null
