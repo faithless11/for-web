@@ -36,6 +36,8 @@ export function ClientContext(props: { children: JSXElement }) {
 
   let fetchedChangelog = false;
   createEffect(() => {
+    // stoat-custom: no requests to official Stoat services (changelog)
+    if (import.meta.env.VITE_STOAT_CUSTOM_CHANGELOG !== "on") return;
     if (!controller.isLoggedIn() || fetchedChangelog) return;
     fetchedChangelog = true;
 

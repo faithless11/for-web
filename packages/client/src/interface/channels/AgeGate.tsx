@@ -34,13 +34,12 @@ export function AgeGate(props: {
 
   const geoQuery = useQuery(() => ({
     queryKey: ["geoblock"],
-    queryFn: async (): Promise<GeoBlock> => {
-      const response = await fetch("https://geo.revolt.chat");
-      if (!response.ok) {
-        throw new Error("Failed to fetch geo data");
-      }
-      return response.json();
-    },
+    // stoat-custom: no requests to official Stoat services (geo.revolt.chat);
+    // self-hosted instance, no geo-based age restriction
+    queryFn: async (): Promise<GeoBlock> => ({
+      countryCode: "",
+      isAgeRestrictedGeo: false,
+    }),
     staleTime: 5 * 60 * 1000, // 5 minutes
     throwOnError: true,
   }));
