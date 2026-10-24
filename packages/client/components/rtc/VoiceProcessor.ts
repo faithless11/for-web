@@ -5,6 +5,9 @@ import { createEffect, createRoot, on } from "solid-js";
 import { CONFIGURATION } from "@revolt/common";
 import { Voice } from "@revolt/state/stores/Voice";
 
+// stoat-custom: volume gate
+import { connectGate, GateNode } from "../custom/gate/GateNode";
+
 export class VoiceProcessor implements TrackProcessor<
   Track.Kind.Audio,
   AudioProcessorOptions
@@ -21,6 +24,8 @@ export class VoiceProcessor implements TrackProcessor<
   private compressorNode?: DynamicsCompressorNode;
   private gainNode?: GainNode;
   private destinationNode?: MediaStreamAudioDestinationNode;
+  // stoat-custom: volume gate
+  private gateNode?: GateNode;
 
   private disposeSolidjsContext: () => void = () => {};
 
@@ -55,6 +60,11 @@ export class VoiceProcessor implements TrackProcessor<
       // This is needed to destroy the solid context on unload
       this.disposeSolidjsContext = dispose;
     });
+  }
+
+  // stoat-custom: expose the volume gate (level meter in settings)
+  get gate(): GateNode | undefined {
+    return this.gateNode;
   }
 
   private getSettings(): Voice {
@@ -155,7 +165,12 @@ export class VoiceProcessor implements TrackProcessor<
 
     // Create the destination node, connect the gain node and send it off to livekit
     this.destinationNode = context.createMediaStreamDestination();
-    this.gainNode.connect(this.destinationNode);
+    // stoat-custom: volume gate between input gain and output
+    this.gateNode = await connectGate(
+      context,
+      this.gainNode,
+      this.destinationNode,
+    );
     this.processedTrack = this.destinationNode.stream.getAudioTracks()[0];
   }
 
@@ -166,6 +181,9 @@ export class VoiceProcessor implements TrackProcessor<
     this.compressorNode?.disconnect();
     this.gainNode?.disconnect();
     this.destinationNode?.disconnect();
+    // stoat-custom: volume gate
+    this.gateNode?.dispose();
+    this.gateNode = undefined;
     this.sourceNode = undefined;
     this.highpassNode = undefined;
     this.noiseSuppressionNode = undefined;

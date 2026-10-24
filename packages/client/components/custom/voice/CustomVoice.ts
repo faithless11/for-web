@@ -11,6 +11,19 @@ import {
 } from "./settings";
 
 /**
+ * The store instance of the running app (there is exactly one State)
+ */
+let activeCustomVoice: CustomVoice | undefined;
+
+/**
+ * Get the custom voice settings from outside the component tree
+ * (e.g. the audio pipeline, which is created by LiveKit callbacks)
+ */
+export function getActiveCustomVoice(): CustomVoice | undefined {
+  return activeCustomVoice;
+}
+
+/**
  * Per-device settings of the stoat-custom voice features (volume gate,
  * push-to-talk). Not synchronised to the account.
  */
@@ -21,6 +34,7 @@ export class CustomVoice extends AbstractStore<"customVoice", TypeCustomVoice> {
    */
   constructor(state: State) {
     super(state, "customVoice");
+    activeCustomVoice = this;
   }
 
   /**
