@@ -68,6 +68,8 @@ export function MicLevelMeter() {
         track: stream.getAudioTracks()[0],
         audioContext: context,
       });
+      // the test shows the gate, independent of push-to-talk
+      processor.gate?.ignorePushToTalk();
       const unsubscribe = processor.gate?.onLevel((db, isOpen) => {
         setLevelDb(db);
         setOpen(isOpen);

@@ -3,6 +3,7 @@ import { CategoryButton, Checkbox, Column, Slider, Text } from "@revolt/ui";
 
 import { MicLevelMeter } from "./gate/MicLevelMeter";
 import { t } from "./i18n";
+import { PushToTalkOptions } from "./ptt/PushToTalkOptions";
 import { GATE_THRESHOLD_MAX, GATE_THRESHOLD_MIN } from "./voice/settings";
 
 /**
@@ -14,6 +15,7 @@ export function CustomVoiceOptions() {
   return (
     <Column>
       <Text class="title">{t("voiceActivationTitle")}</Text>
+      <PushToTalkOptions />
       <CategoryButton.Group>
         <CategoryButton
           icon="blank"

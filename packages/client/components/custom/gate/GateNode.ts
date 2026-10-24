@@ -1,4 +1,4 @@
-import { createEffect, createRoot } from "solid-js";
+import { createEffect, createRoot, createSignal } from "solid-js";
 
 import { getActiveCustomVoice } from "../voice/CustomVoice";
 
@@ -10,22 +10,25 @@ import workletUrl from "./gate.worklet.ts?worker&url";
 const loadedContexts = new WeakSet<BaseAudioContext>();
 
 /**
- * All gate nodes currently alive
+ * Whether the push-to-talk key is currently held (set by PushToTalkController)
  */
-const liveGates = new Set<GateNode>();
+const [pushToTalkOpen, setPushToTalkOpenSignal] = createSignal(false);
 
 /**
- * Whether push-to-talk currently allows transmitting
+ * Report whether the push-to-talk key is held
+ * @param open Whether audio may pass in push-to-talk mode
  */
-let transmitAllowed = true;
+export function setPushToTalkOpen(open: boolean) {
+  setPushToTalkOpenSignal(open);
+}
 
 /**
- * Allow or block transmitting on all gates (used by push-to-talk)
- * @param allowed Whether audio may pass
+ * Whether audio may be transmitted right now: always with voice activation,
+ * only while the key is held in push-to-talk mode. Reactive.
  */
-export function setTransmitAllowed(allowed: boolean) {
-  transmitAllowed = allowed;
-  liveGates.forEach((gate) => gate.sync());
+export function transmitAllowed(): boolean {
+  const settings = getActiveCustomVoice();
+  return !settings || settings.inputMode !== "ptt" || pushToTalkOpen();
 }
 
 /**
@@ -45,6 +48,8 @@ export class GateNode {
   readonly node: AudioWorkletNode;
   private enabled = false;
   private thresholdDb = -50;
+  private transmit = true;
+  private followPushToTalk = true;
   private readonly levelListeners = new Set<
     (levelDb: number, open: boolean) => void
   >();
@@ -67,7 +72,6 @@ export class GateNode {
       this.levelListeners.forEach((cb) =>
         cb(event.data.levelDb, event.data.open),
       );
-    liveGates.add(this);
     this.sync();
   }
 
@@ -88,6 +92,22 @@ export class GateNode {
   }
 
   /**
+   * Allow or block transmitting (push-to-talk)
+   */
+  setTransmitAllowed(value: boolean) {
+    this.transmit = this.followPushToTalk ? value : true;
+    this.sync();
+  }
+
+  /**
+   * Let audio pass regardless of push-to-talk (microphone test in settings)
+   */
+  ignorePushToTalk() {
+    this.followPushToTalk = false;
+    this.setTransmitAllowed(true);
+  }
+
+  /**
    * Subscribe to level reports (about every 50 ms)
    * @returns Unsubscribe function
    */
@@ -103,7 +123,7 @@ export class GateNode {
     this.node.port.postMessage({
       enabled: this.enabled,
       thresholdDb: this.thresholdDb,
-      transmitAllowed,
+      transmitAllowed: this.transmit,
     });
   }
 
@@ -111,7 +131,6 @@ export class GateNode {
    * Disconnect and forget this gate
    */
   dispose() {
-    liveGates.delete(this);
     this.levelListeners.clear();
     this.node.port.onmessage = null;
     this.node.disconnect();
@@ -145,6 +164,7 @@ export async function connectGate(
         createEffect(() => {
           gate.setEnabled(settings.gateEnabled);
           gate.setThresholdDb(settings.gateThresholdDb);
+          gate.setTransmitAllowed(transmitAllowed());
         });
         return dispose;
       });
