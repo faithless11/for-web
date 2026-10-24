@@ -9,6 +9,9 @@ import { useState } from "@revolt/state";
 
 import { useVoice } from "../state";
 
+// stoat-custom: push-to-talk while connected
+import { PushToTalkController } from "../../custom/ptt/PushToTalkController";
+
 export function RoomAudioManager() {
   const voice = useVoice();
   const state = useState();
@@ -44,6 +47,8 @@ export function RoomAudioManager() {
 
   return (
     <div style={{ display: "none" }}>
+      {/* stoat-custom: push-to-talk while connected */}
+      <PushToTalkController />
       <Key each={filteredTracks()} by={(item) => getTrackReferenceId(item)}>
         {(track) => (
           <AudioTrack

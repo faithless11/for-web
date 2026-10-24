@@ -33,6 +33,8 @@ import { Sounds } from "./stores/Sounds";
 import { Sync } from "./stores/Sync";
 import { Theme } from "./stores/Theme";
 import { Voice } from "./stores/Voice";
+// stoat-custom: settings of the custom voice features
+import { CustomVoice } from "../custom/voice/CustomVoice";
 
 export { ALLOWED_IMAGE_TYPES } from "./stores/Draft";
 export type { Sounds, TypeSounds } from "./stores/Sounds";
@@ -90,6 +92,8 @@ export class State {
   theme = new Theme(this);
   voice = new Voice(this);
   sounds = new Sounds(this);
+  // stoat-custom: settings of the custom voice features
+  customVoice = new CustomVoice(this);
 
   /**
    * Iterate over all available stores

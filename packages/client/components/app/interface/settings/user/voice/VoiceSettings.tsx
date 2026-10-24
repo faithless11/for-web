@@ -7,6 +7,9 @@ import { ScreenShareOptions } from "./ScreenShareOptions";
 import { VoiceInputOptions } from "./VoiceInputOptions";
 import { VoiceProcessingOptions } from "./VoiceProcessingOptions";
 
+// stoat-custom: volume gate / push-to-talk settings
+import { CustomVoiceOptions } from "../../../../../custom/CustomVoiceOptions";
+
 /**
  * Configure voice options
  */
@@ -17,6 +20,8 @@ export function VoiceSettings() {
     <Column gap="lg">
       <VoiceInputOptions />
       <VoiceProcessingOptions />
+      {/* stoat-custom: volume gate / push-to-talk settings */}
+      <CustomVoiceOptions />
       <Show when={limits().video}>
         <ScreenShareOptions />
       </Show>
