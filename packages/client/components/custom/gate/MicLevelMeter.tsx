@@ -103,6 +103,12 @@ export function MicLevelMeter() {
 
   onCleanup(stop);
 
+  /**
+   * Current state shown next to the button
+   */
+  const status = () =>
+    !state.customVoice.gateEnabled ? "off" : open() ? "open" : "closed";
+
   return (
     <Column>
       <Row align>
@@ -110,7 +116,13 @@ export function MicLevelMeter() {
           {test() ? t("micTestStop") : t("micTestStart")}
         </Button>
         <Show when={test()}>
-          <Text class="label">{open() ? t("gateOpen") : t("gateClosed")}</Text>
+          <Status data-status={status()}>
+            {status() === "off"
+              ? t("gateOff")
+              : status() === "open"
+                ? t("gateOpen")
+                : t("gateClosed")}
+          </Status>
         </Show>
         <Show when={error()}>
           <Text class="label">{t("micTestError")}</Text>
@@ -122,17 +134,24 @@ export function MicLevelMeter() {
         aria-valuemin={GATE_THRESHOLD_MIN}
         aria-valuemax={GATE_THRESHOLD_MAX}
         aria-valuenow={Math.round(levelDb())}
+        data-gate={state.customVoice.gateEnabled ? "" : undefined}
       >
+        <MutedZone
+          style={{ width: `${toPercent(state.customVoice.gateThresholdDb)}%` }}
+        />
         <Level
-          data-open={open() ? "" : undefined}
+          data-open={test() && open() ? "" : undefined}
           style={{ width: `${toPercent(levelDb())}%` }}
         />
-        <Show when={state.customVoice.gateEnabled}>
-          <Threshold
-            style={{ left: `${toPercent(state.customVoice.gateThresholdDb)}%` }}
-          />
-        </Show>
+        <Threshold
+          style={{ left: `${toPercent(state.customVoice.gateThresholdDb)}%` }}
+        />
       </Meter>
+      <Text class="label">
+        {test() ? `${t("levelLabel")} ${Math.round(levelDb())} dB · ` : ""}
+        {`${t("gateThreshold")} ${state.customVoice.gateThresholdDb} dB`}
+        {state.customVoice.gateEnabled ? "" : ` (${t("gateOffShort")})`}
+      </Text>
     </Column>
   );
 }
@@ -149,15 +168,64 @@ const Column = styled("div", {
 });
 
 /**
- * Meter track
+ * Gate state indicator next to the test button
+ */
+const Status = styled("span", {
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "var(--gap-sm)",
+    fontWeight: 600,
+    color: "var(--md-sys-color-on-surface-variant)",
+    "&::before": {
+      content: "''",
+      width: "10px",
+      height: "10px",
+      borderRadius: "var(--borderRadius-full)",
+      background: "var(--md-sys-color-outline)",
+    },
+    "&[data-status=open]": {
+      color: "var(--brand-presence-online)",
+    },
+    "&[data-status=open]::before": {
+      background: "var(--brand-presence-online)",
+    },
+    "&[data-status=closed]": {
+      color: "var(--md-sys-color-error)",
+    },
+    "&[data-status=closed]::before": {
+      background: "var(--md-sys-color-error)",
+    },
+  },
+});
+
+/**
+ * Meter track; the part above the threshold is the "transmitting" zone
  */
 const Meter = styled("div", {
   base: {
     position: "relative",
-    height: "12px",
-    borderRadius: "var(--borderRadius-full)",
+    height: "20px",
+    borderRadius: "var(--borderRadius-md)",
     background: "var(--md-sys-color-surface-container-highest)",
     overflow: "hidden",
+  },
+});
+
+/**
+ * Zone below the threshold, where the gate mutes
+ */
+const MutedZone = styled("div", {
+  base: {
+    position: "absolute",
+    top: 0,
+    bottom: 0,
+    left: 0,
+    background: "var(--md-sys-color-error)",
+    opacity: 0,
+    "[data-gate] > &": {
+      opacity: 0.18,
+    },
   },
 });
 
@@ -166,11 +234,15 @@ const Meter = styled("div", {
  */
 const Level = styled("div", {
   base: {
-    height: "100%",
+    position: "absolute",
+    top: "5px",
+    bottom: "5px",
+    left: 0,
+    borderRadius: "var(--borderRadius-sm)",
     background: "var(--md-sys-color-outline)",
     transition: "width 50ms linear",
     "&[data-open]": {
-      background: "var(--md-sys-color-primary)",
+      background: "var(--brand-presence-online)",
     },
   },
 });
@@ -183,7 +255,13 @@ const Threshold = styled("div", {
     position: "absolute",
     top: 0,
     bottom: 0,
-    width: "2px",
+    width: "4px",
+    marginLeft: "-2px",
+    borderRadius: "var(--borderRadius-sm)",
     background: "var(--md-sys-color-on-surface)",
+    opacity: 0.35,
+    "[data-gate] > &": {
+      opacity: 1,
+    },
   },
 });

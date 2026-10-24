@@ -21,6 +21,12 @@ const STRINGS = {
   micLevel: { en: "Microphone level", de: "Mikrofonpegel" },
   gateOpen: { en: "Transmitting", de: "Wird gesendet" },
   gateClosed: { en: "Muted by gate", de: "Vom Gate stumm" },
+  gateOff: {
+    en: "Gate off – everything is transmitted",
+    de: "Gate aus – alles wird gesendet",
+  },
+  gateOffShort: { en: "gate off", de: "Gate aus" },
+  levelLabel: { en: "Level", de: "Pegel" },
   micTestError: {
     en: "Could not access the microphone",
     de: "Kein Zugriff auf das Mikrofon",
